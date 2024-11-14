@@ -28,7 +28,7 @@ const TypeSelectionModal: React.FC<TypeSelectionModalProps> = ({
   onClose,
 }) => (
   <Modal
-    animationType="slide"
+    animationType="none"
     transparent
     visible={visible}
     onRequestClose={onClose}
@@ -161,19 +161,23 @@ const App = () => {
   }, [searchTerm]);
 
   const renderFooter = () => (
-    <View style={styles.paginationContainer}>
+    <View style={styles.footerContainer}>
       <TouchableOpacity
-        style={styles.paginationButton}
+        style={[
+          styles.paginationButton,
+          page === 1 && styles.paginationButtonDisabled,
+        ]}
         onPress={prevPage}
         disabled={page === 1}
       >
         <Text style={styles.paginationButtonText}>Previous</Text>
       </TouchableOpacity>
-      <Text
-        style={[styles.paginationButtonText, styles.pageInfoText]}
-      >{`Page ${page} of ${totalPages}`}</Text>
+      <Text style={styles.pageInfoText}>{`Page ${page} of ${totalPages}`}</Text>
       <TouchableOpacity
-        style={styles.paginationButton}
+        style={[
+          styles.paginationButton,
+          page === totalPages && styles.paginationButtonDisabled,
+        ]}
         onPress={nextPage}
         disabled={page === totalPages}
       >
@@ -183,36 +187,38 @@ const App = () => {
   );
 
   return (
-    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-      <View style={styles.container}>
-        {/* Search and Dropdown Selection */}
-        <View style={styles.searchContainer}>
-          <TextInput
-            placeholder="Search Pokémon"
-            style={styles.input}
-            onChangeText={setSearchTerm}
-            value={searchTerm}
-          />
-          <TouchableOpacity style={styles.clearButton} onPress={clearSearch}>
-            <Text style={styles.clearButtonText}>Clear Text</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.dropdown}
-            onPress={() => setModalVisible(true)}
-          >
-            <Text style={styles.dropdownText}>{selectedType}</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Type Selection Modal */}
-        <TypeSelectionModal
-          visible={modalVisible}
-          selectedType={selectedType}
-          onSelectType={handleTypeChange}
-          onClose={() => setModalVisible(false)}
+    <View
+      style={[styles.container, { backgroundColor: typeColors[selectedType] }]}
+    >
+      {/* Search and Dropdown Selection */}
+      <View style={styles.searchContainer}>
+        <TextInput
+          placeholder="Search Pokémon"
+          style={styles.input}
+          onChangeText={setSearchTerm}
+          value={searchTerm}
         />
+        <TouchableOpacity style={styles.clearButton} onPress={clearSearch}>
+          <Text style={styles.clearButtonText}>Clear Text</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.dropdown}
+          onPress={() => setModalVisible(true)}
+        >
+          <Text style={styles.dropdownText}>{selectedType}</Text>
+        </TouchableOpacity>
+      </View>
 
-        {/* Pokémon List or No Results Image */}
+      {/* Type Selection Modal */}
+      <TypeSelectionModal
+        visible={modalVisible}
+        selectedType={selectedType}
+        onSelectType={handleTypeChange}
+        onClose={() => setModalVisible(false)}
+      />
+
+      {/* Pokémon List or No Results Image */}
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         {loading ? (
           <ActivityIndicator style={styles.loadingIndicator} />
         ) : error ? (
@@ -226,13 +232,14 @@ const App = () => {
           <PokemonList
             ref={pokemonListRef}
             data={paginatedPokemon}
+            type={selectedType}
             ListFooterComponent={
               filteredPokemon.length > 0 ? renderFooter : undefined
             }
           />
         )}
-      </View>
-    </TouchableWithoutFeedback>
+      </TouchableWithoutFeedback>
+    </View>
   );
 };
 
@@ -289,7 +296,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     padding: 20,
     borderRadius: 5,
-    width: "30%",
+    width: "40%",
   },
   modalOption: {
     flexDirection: "row",
@@ -316,20 +323,6 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingVertical: 10,
   },
-  paginationButton: {
-    padding: 10,
-    backgroundColor: "#f0f0f0",
-    borderRadius: 5,
-    marginHorizontal: 5,
-  },
-  paginationButtonText: {
-    fontSize: 16,
-    color: "#333",
-  },
-  pageInfoText: {
-    flex: 1,
-    textAlign: "center",
-  },
   loadingIndicator: {
     marginTop: 20,
   },
@@ -350,6 +343,57 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     marginTop: 50,
   },
+  footerContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    marginHorizontal: 16,
+    marginTop: 10,
+    borderRadius: 10,
+    backgroundColor: "#F0F0F0",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  paginationButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 15,
+    backgroundColor: "#f0f0f0",
+    borderRadius: 5,
+    alignItems: "center",
+  },
+  paginationButtonDisabled: {
+    opacity: 0.5,
+  },
+  paginationButtonText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#333",
+  },
+  pageInfoText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#333",
+    textAlign: "center",
+    flex: 1,
+  },
 });
+
+const typeColors: Record<string, string> = {
+  "All Types": "#A8A77A", // Neutral color for "All Types"
+  fire: "#EE8130", // Orange for fire
+  water: "#6390F0", // Blue for water
+  grass: "#7AC74C", // Green for grass
+  electric: "#F7D02C", // Yellow for electric
+  dragon: "#6F35FC", // Purple for dragon
+  psychic: "#F95587", // Pink for psychic
+  ghost: "#735797", // Dark purple for ghost
+  dark: "#705746", // Brownish for dark
+  steel: "#B7B7CE", // Light gray for steel
+  fairy: "#D685AD", // Light pink for fairy
+};
 
 export default App;
